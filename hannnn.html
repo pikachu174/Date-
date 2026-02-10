@@ -1,171 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YouTube Short — Autoplay (No Controls)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food Video</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
 
-    /* Fullscreen video container */
-    .video-container {
-      position: relative;
-      width: 100%;
-      height: 100vh;
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+
+    body {
       overflow: hidden;
       background: black;
     }
 
-    /* Responsive embedded iframe (fills container) */
-    .video-iframe {
-      position: absolute;
-      inset: 0;              /* top:0; right:0; bottom:0; left:0; */
-      width: 100%;
-      height: 100%;
-      border: 0;
-      /* Prevent pointer events so YouTube's hover controls don't appear */
-      pointer-events: none;
+    .video-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    /* Optional overlay (improves text contrast) */
+    video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.25);
-      z-index: 10;
-      pointer-events: none;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 2;
     }
 
-    /* UI text/content on top of the video */
-    .ui {
+    .content {
       position: absolute;
-      z-index: 20;
-      color: #fff;
-      left: 24px;
-      top: 24px;
-      font-weight: 700;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-      pointer-events: auto; /* UI may be interactive if needed */
-    }
-
-    /* Small helper note shown if script can't parse link */
-    .note {
-      position: absolute;
-      bottom: 20px;
-      left: 24px;
-      z-index: 20;
-      color: rgba(255,255,255,0.9);
-      background: rgba(0,0,0,0.35);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      pointer-events: auto;
+      z-index: 3;
+      color: white;
+      width: 100%;
+      text-align: center;
+      top: 60%;
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
     }
   </style>
 </head>
+
 <body>
 
   <div class="video-container">
-    <!-- Insert your YouTube Short URL in the JS variable below (PASTE_YOUTUBE_SHORT_URL_HERE) -->
-    <iframe
-      id="yt-iframe"
-      class="video-iframe"
-      src=""
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen="false"
-      title="YouTube short player"
-    ></iframe>
+
+    <!-- SAME REPO VIDEO -->
+    <video autoplay muted loop playsinline preload="auto">
+      <source src="./khana.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
 
     <div class="overlay"></div>
 
-    <div class="ui">
-      How do you feel about a North Indian food date? — UV
+    <div class="content">
+      How do you feel about a North Indian food date?<br>
+      — UV
     </div>
 
-    <div id="note" class="note" style="display:none;"></div>
   </div>
-
-  <script>
-    // === PUT YOUR SHORT LINK HERE ===
-    // Examples:
-    // "https://youtu.be/VIDEO_ID"
-    // "https://www.youtube.com/shorts/VIDEO_ID"
-    // "https://www.youtube.com/watch?v=VIDEO_ID"
-    const shortUrl = "https://www.youtube.com/shorts/UfDFYbQzDDA";
-
-    // Extract a YouTube video id from multiple possible URL formats
-    function extractYouTubeId(url) {
-      if (!url || typeof url !== "string") return null;
-      // trim whitespace
-      url = url.trim();
-
-      // Patterns:
-      // youtu.be/ID
-      // youtube.com/watch?v=ID
-      // youtube.com/shorts/ID
-      // embed/ID
-      const patterns = [
-        /youtu\.be\/([A-Za-z0-9_-]{8,})/,                      // youtu.be/ID
-        /youtube\.com\/watch\?v=([A-Za-z0-9_-]{8,})/,           // watch?v=ID
-        /youtube\.com\/shorts\/([A-Za-z0-9_-]{8,})/,            // shorts/ID
-        /youtube\.com\/embed\/([A-Za-z0-9_-]{8,})/              // embed/ID
-      ];
-
-      for (const p of patterns) {
-        const m = url.match(p);
-        if (m && m[1]) return m[1];
-      }
-
-      // fallback: try to pull last path segment
-      try {
-        const u = new URL(url);
-        const parts = u.pathname.split("/").filter(Boolean);
-        if (parts.length) {
-          const last = parts[parts.length - 1];
-          if (/^[A-Za-z0-9_-]{8,}$/.test(last)) return last;
-        }
-      } catch (e) {
-        // not a valid URL; try a plain ID provided directly
-        if (/^[A-Za-z0-9_-]{8,}$/.test(url)) return url;
-      }
-
-      return null;
-    }
-
-    (function init() {
-      const id = extractYouTubeId(shortUrl);
-      const iframe = document.getElementById("yt-iframe");
-      const note = document.getElementById("note");
-
-      if (!id) {
-        note.style.display = "block";
-        note.textContent = "Invalid or empty YouTube link. Paste a Short/YouTube URL into the JS variable 'shortUrl'.";
-        console.warn("Could not extract YouTube ID from:", shortUrl);
-        return;
-      }
-
-      // Build embed URL with parameters:
-      // autoplay=1 -> try to autoplay
-      // mute=1    -> required in many browsers for autoplay to work
-      // controls=0 -> hide controls
-      // modestbranding=1 -> reduces YouTube branding
-      // rel=0 -> do not show related videos from other channels (best-effort)
-      // iv_load_policy=3 -> hide annotations/IV
-      // playsinline=1 -> play inline on mobile
-      // fs=0 -> disable fullscreen button in the player
-      const embedSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&fs=0`;
-
-      // Set iframe src and let it autoplay (muted)
-      iframe.src = embedSrc;
-
-      // Note for user (optional)
-      note.style.display = "block";
-      note.textContent = "Playing YouTube Short (autoplay muted). Controls are hidden by design.";
-      // Hide the note after a few seconds
-      setTimeout(() => { note.style.display = "none"; }, 3500);
-    })();
-  </script>
 
 </body>
 </html>
